@@ -4,15 +4,17 @@ import java.io.File
 import java.nio.file.Paths
 import kotlin.math.max
 
+
 fun main() {
-    val resultList = mutableListOf<Int>()
+    val resultList = mutableListOf<Long>()
 
     val absoluteCurrentPath = Paths.get("").toAbsolutePath().toString()
     val file = File("$absoluteCurrentPath/advent-of-code-2025/src/main/kotlin/day3/test_input.txt")
     if (file.exists()) {
         file.forEachLine { batteriesBank ->
-//            computeMaxJoltage(batteriesBank, resultList)
-            computeMaxJoltageOptimized(batteriesBank, resultList)
+//            computeMaxJoltageForTwoDigits(batteriesBank, resultList)
+//            computeMaxJoltageOptimizedForTwoDigits(batteriesBank, resultList)
+            computeMaxJoltageForGivenDigits(batteriesBank, 12, resultList)
         }
     } else {
         println("File not found.")
@@ -25,10 +27,10 @@ fun main() {
     println("Sum = $sum")
 }
 
-// Naive Approach :- O(n^2) Time Complexity
-fun computeMaxJoltage(batteriesBank: String, resultList: MutableList<Int>) {
+// Naive Approach (2 digits) :- O(n^2) Time Complexity
+fun computeMaxJoltageForTwoDigits(batteriesBank: String, resultList: MutableList<Long>) {
     val batteriesBankSize = batteriesBank.length
-    var maxJoltage = 0
+    var maxJoltage = 0L
 
     for (firstIndex in 0..(batteriesBankSize - 2)) {
         val tensPlaceDigit = batteriesBank[firstIndex] - '0'
@@ -38,15 +40,15 @@ fun computeMaxJoltage(batteriesBank: String, resultList: MutableList<Int>) {
             maxRight = max(maxRight, batteriesBank[secondIndex] - '0')
         }
 
-        maxJoltage = max(maxJoltage, tensPlaceDigit * 10 + maxRight)
+        maxJoltage = max(maxJoltage, tensPlaceDigit * 10L + maxRight)
     }
 
     println("For batteriesBank: $batteriesBank, the max Joltage is $maxJoltage")
     resultList.add(maxJoltage)
 }
 
-// Greedy Approach :- O(n) Time Complexity
-fun computeMaxJoltageOptimized(batteriesBank: String, resultList: MutableList<Int>) {
+// Greedy Approach (2 digits) :- O(n) Time Complexity
+fun computeMaxJoltageOptimizedForTwoDigits(batteriesBank: String, resultList: MutableList<Long>) {
     val batteriesBankSize = batteriesBank.length
 
     // Create digits array
@@ -63,10 +65,44 @@ fun computeMaxJoltageOptimized(batteriesBank: String, resultList: MutableList<In
     }
 
     // Compute max Joltage
-    var maxJoltage = 0
+    var maxJoltage = 0L
     for (index in 0..(batteriesBankSize - 2)) {
-        maxJoltage = max(maxJoltage, (digits[index] * 10 + maxRight[index + 1]))
+        maxJoltage = max(maxJoltage, (digits[index] * 10L + maxRight[index + 1]))
     }
+
+    println("For batteriesBank: $batteriesBank, the max Joltage is $maxJoltage")
+    resultList.add(maxJoltage)
+}
+
+
+// Optimized Approach (for any given preserve digits) :- O(n^2) Time Complexity
+fun computeMaxJoltageForGivenDigits(batteriesBank: String, preserveDigits: Int, resultList: MutableList<Long>) {
+    val batteriesBankSize = batteriesBank.length
+    var toRemove = batteriesBankSize - preserveDigits
+
+    val stack = ArrayDeque<Char>()
+
+    for (digit: Char in batteriesBank.toCharArray()) {
+            while (!stack.isEmpty()
+                    && toRemove > 0
+                    && stack.last() < digit) {
+                stack.removeLast()
+                toRemove--
+            }
+            stack.addLast(digit)
+    }
+
+    // If removals still left, remove from the end
+    while (toRemove-- > 0) {
+        stack.removeLast()
+    }
+
+    // Build result of exactly 12 digits
+    val maxJoltageString = StringBuilder(12)
+    for (i in 0..11) {
+        maxJoltageString.append(stack.removeFirst())
+    }
+    val maxJoltage = maxJoltageString.toString().toLong()
 
     println("For batteriesBank: $batteriesBank, the max Joltage is $maxJoltage")
     resultList.add(maxJoltage)
